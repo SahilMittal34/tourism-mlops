@@ -83,5 +83,5 @@ tourism-mlops/
 
 ## Final project links
 
-- GitHub repository: `PASTE_YOUR_GITHUB_REPOSITORY_URL_HERE`
-- Streamlit application: `PASTE_YOUR_STREAMLIT_APP_URL_HERE`
+- GitHub repository: `https://github.com/SahilMittal34/tourism-mlops`
+- Streamlit application: `https://tourism-mlops-kzddquwqycb3tptilhbyca.streamlit.app/`
