@@ -1,0 +1,103 @@
+name: Tourism MLOps Pipeline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  data-prep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install data preparation dependencies
+        run: pip install pandas==2.2.3 scikit-learn==1.5.2
+
+      - name: Prepare train and test data
+        run: python src/data_prep.py
+
+      - name: Upload prepared data
+        uses: actions/upload-artifact@v4
+        with:
+          name: prepared-data
+          path: artifacts/
+
+  model-training:
+    needs: data-prep
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install model training dependencies
+        run: pip install -r requirements-actions.txt
+
+      - name: Download prepared data
+        uses: actions/download-artifact@v4
+        with:
+          name: prepared-data
+          path: artifacts/
+
+      - name: Train models and track experiments
+        env:
+          MLFLOW_TRACKING_URI: file:./mlruns
+        run: python src/train.py
+
+      - name: Run tests
+        run: pytest -q
+
+      - name: Upload trained model and experiment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: |
+            deployment/model.joblib
+            deployment/model_metadata.json
+            model_building/best_model.joblib
+            model_building/experiment_results.csv
+            mlruns/
+
+  deploy-streamlit:
+    needs: model-training
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download trained model artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-model
+          path: .
+
+      - name: Validate Streamlit application
+        run: |
+          pip install streamlit==1.64.0 pandas==2.2.3 numpy==1.26.4 scikit-learn==1.5.2 joblib==1.4.2
+          python -m py_compile app.py
+          python -c "import joblib; m=joblib.load('deployment/model.joblib'); print(type(m).__name__)"
+
+      - name: Commit updated model artifact for Streamlit Cloud
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deployment/model.joblib deployment/model_metadata.json model_building/best_model.joblib model_building/experiment_results.csv
+          if git diff --cached --quiet; then
+            echo "No model artifact changes to commit."
+          else
+            git commit -m "Update trained model [skip ci]"
+            git push
+          fi
