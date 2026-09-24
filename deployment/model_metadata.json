@@ -1,5 +1,5 @@
 {
-  "model_name": "Random Forest",
+  "model_name": "random_forest",
   "target": "ProdTaken",
   "features": [
     "Age",
@@ -21,6 +21,14 @@
     "Designation",
     "MonthlyIncome"
   ],
+  "categorical_features": [
+    "TypeofContact",
+    "Occupation",
+    "Gender",
+    "ProductPitched",
+    "MaritalStatus",
+    "Designation"
+  ],
   "numeric_features": [
     "Age",
     "CityTier",
@@ -34,14 +42,6 @@
     "OwnCar",
     "NumberOfChildrenVisiting",
     "MonthlyIncome"
-  ],
-  "categorical_features": [
-    "TypeofContact",
-    "Occupation",
-    "Gender",
-    "ProductPitched",
-    "MaritalStatus",
-    "Designation"
   ],
   "random_state": 42
 }
